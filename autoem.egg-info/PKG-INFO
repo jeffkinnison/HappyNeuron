@@ -1,0 +1,22 @@
+Metadata-Version: 1.1
+Name: autoem
+Version: 0.0.1
+Summary: AutoEM
+Home-page: UNKNOWN
+Author: Rafael Vescovi, Hanyu Li, Nicola Ferrier, Thomas Uram, Wushi Dong, Murat Keceli
+Author-email: ravescovi@anl.gov
+License: BSD-3
+Download-URL: http://github.com/ravescovi/autoem
+Description: UNKNOWN
+Keywords: Electron Microscopy,brain,flood fill netword,imaging
+Platform: Any
+Classifier: Development Status :: 4 - Beta
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Intended Audience :: Science/Research
+Classifier: Intended Audience :: Education
+Classifier: Intended Audience :: Developers
+Classifier: Natural Language :: English
+Classifier: Operating System :: Linux
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Programming Language :: Python :: 3.4
+Classifier: Programming Language :: Python :: 3.5
