@@ -46,7 +46,7 @@
 # #########################################################################
 
 """
-Converts reconstructed tiff image file into hdf5 file.
+Library of Input / Output for Electron Microscopy
 """
 
 from __future__ import (absolute_import, division, print_function,
@@ -57,31 +57,20 @@ import numpy as np
 from skimage.io import imread
 from glob import glob
 import os.path
-from segmentation_param import *
-from mpi4py import MPI
 import time
 
-__author__ = "Mehdi Tondravi"
-__copyright__ = "Copyright (c) 2016, UChicago Argonne, LLC."
-__docformat__ = 'restructuredtext en'
-__all__ = ['tiff_to_hdf5_files']
+from mpi4py import MPI
 
-def tiff_to_hdf5_files():
+
+__author__ = "Rafael Vescovi"
+__copyright__ = "Copyright (c) 2019, UChicago Argonne, LLC."
+__docformat__ = 'restructuredtext en'
+__all__ = ['tiff2hdf']
+
+def tiff2hdf():
     """
-    Create a directory to hold the hdf file at same level as tiff files directory. This directory name
-    is the same as tiff directory name plus "_hdf". Create an hdf5 file with the name made of 
-    the concatenation of the first tiff file and last tiff file. Create an hdf data set name with the 
-    same name as the directory name of the tiff files.
-    As an example if the tiff files are located at, "/path/Downloads/eva_block" directory,
-    the first tiff name is "data_00860.tiff.tif" and the last tiff file name is "data_01139.tiff.tif" 
-    then the hdf file created is:
-    /path/Downloads/eva_block_hdf/data_00860.tiff_data_01139.tiff.hdf5
-    and hdf5 data set name is "eva_block".
-    
-    Input: Tiff files location is specified in the segmentation_param.py file.
-    
-    Output: HDF5 files location is specified in the segmentation_param.py file.
-    
+    Create a hdf file from a tiff stack.
+        
     """
     
     comm = MPI.COMM_WORLD
