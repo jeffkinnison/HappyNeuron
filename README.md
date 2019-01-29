@@ -1,12 +1,30 @@
-# autoem
+# autoEM
 
 Automatic Electron Microscopy or AutoEM for short is a set of macros to create a full EM pipeline.
 
-The folder macros will have terminal callable scripts and the folder autoem will have the libraries involved.
+## Getting Started
 
-On a crude fashion, each item of the list bellow should be a blackbox (script with defined inputs/outputs).
+These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
 
-Those scripts should be either callable from a MPI compatible machine or a single workstation.
+### Prerequisites
+
+What things you need to install the software and how to install them
+
+* Neuroglancer
+* CloudVolume
+* Knossos Utils
+* ffn
+* etc
+
+### Installing
+
+A step by step series of examples that tell you how to get a development env running
+
+Say what the step will be
+
+```
+pip install . -e
+```
 
 ## List of Macros in workflow form
 
@@ -53,3 +71,33 @@ Those scripts should be either callable from a MPI compatible machine or a singl
 ### Other Macros
 - [ ] webKnossos injection/extraction
 
+
+
+## Deployment
+
+The folder macros will have terminal callable scripts and the folder autoem will have the libraries involved.
+On a crude fashion, each item of the list bellow should be a blackbox (script with defined inputs/outputs).
+Those scripts should be either callable from a MPI compatible machine or a single workstation.
+
+
+## Versioning
+
+We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/your/project/tags). 
+
+## Authors
+
+* **Rafael Vescovi** - *Initial work*
+
+See also the list of [contributors](https://github.com/ravescovi/autoem/contributors) who participated in this project.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
+
+## Acknowledgments
+
+* University of Chicago
+* Argonne National Laboratories
+* Harvard University
+* Google
+* Princeton University
