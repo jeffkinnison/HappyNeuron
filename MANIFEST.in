@@ -1,0 +1,6 @@
+include LICENSE.txt
+include README.rst
+include VERSION
+
+recursive-include test *
+recursive-exclude * __pycache__

@@ -1,0 +1,28 @@
+package:
+  name: autoem
+  version: '0.0.1'
+
+source:
+  git_url: https://github.com/ravescovi/autoem.git
+  
+build:
+  number: 0
+
+requirements:
+  build:
+    - python
+    - setuptools
+
+  run:
+    - python
+    - numpy
+
+test:
+  # Python imports
+  imports:
+    - autoem
+
+about:
+  license: BSD-3
+  summary: 'Electron Microscopy automation pipeline.'
+
