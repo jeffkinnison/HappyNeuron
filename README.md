@@ -1,6 +1,8 @@
-# autoEM
+# Hexascale Automated Pipeline Processing (Y?) for Neuroscience
 
-Automatic Electron Microscopy or AutoEM for short is a set of macros to create a full EM pipeline.
+This library aim to provide integration of different libraries used for neuroscience with the current US HPC facilities.
+
+
 
 ## Getting Started
 
@@ -16,7 +18,16 @@ What things you need to install the software and how to install them
 * ffn
 * etc
 
-### Installing
+### Building your preamble at Cooley HPC.
+
+A step by step series of examples that tell you how to get a development env running
+
+Say what the step will be
+
+```
+pip install . -e
+```
+### Building your preamble at Theta HPC.
 
 A step by step series of examples that tell you how to get a development env running
 
@@ -86,6 +97,11 @@ We use [SemVer](http://semver.org/) for versioning. For the versions available, 
 
 ## Authors
 
+* **Rafael Vescovi** - *Initial work*
+* **Hanyu Li** - *Initial work*
+* **Murat Keceli** - *Initial work*
+* **Bobby Kasthuri** - *Initial work*
+* **Nicola Ferrier** - *Initial work*
 * **Rafael Vescovi** - *Initial work*
 
 See also the list of [contributors](https://github.com/ravescovi/autoem/contributors) who participated in this project.
