@@ -1,4 +1,4 @@
-# Hexascale Automated Pipeline Processing (Y?) for Neuroscience
+# HPC Automated Pipeline Processing Yotta Neurons
 
 This library aim to provide integration of different libraries used for neuroscience with the current US HPC facilities.
 
