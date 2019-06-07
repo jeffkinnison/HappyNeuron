@@ -1,0 +1,11 @@
+train.py \
+    --train_coords tf_record_file2 \
+    --data_volumes VS1025_cyto_axons:training_data.h5:image \
+    --label_volumes VS1025_cyto_axons:training_data.h5:labels \
+    --model_name convstack_3d.ConvStack3DFFNModel \
+    --model_args "{\"depth\": 8, \"fov_size\": [31, 31, 31], \"deltas\": [5, 5, 5]}" \
+    --image_mean 91 \
+    --image_stddev 65 \
+    --train_dir training_points_8_31_5/ \
+    --max_steps 10000000
+
