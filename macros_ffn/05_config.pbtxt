@@ -1,0 +1,22 @@
+image {
+  hdf5: "training_data.h5:image"
+}
+image_mean: 126
+image_stddev: 41
+checkpoint_interval: 1800
+seed_policy: "PolicyPeaks"
+model_checkpoint_path: "training_point_trained/model.ckpt-1668689"
+model_name: "convstack_3d.ConvStack3DFFNModel"
+model_args: "{\"depth\": 8, \"fov_size\": [11,11,11], \"deltas\": [1,1,1]}"
+segmentation_output_dir: "results/inference_01"
+inference_options {
+  init_activation: 0.95
+  pad_value: 0.05
+  move_threshold: 0.7
+  min_boundary_dist { x: 1 y: 1 z: 1}
+  segment_threshold: 0.4
+  min_segment_size: 10
+}
+
+
+
