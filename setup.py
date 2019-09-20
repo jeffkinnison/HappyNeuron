@@ -4,19 +4,19 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='autoem',
+    name='HappyNeuron',
     packages=find_packages(exclude=['test*']),
     version=open('VERSION').read().strip(),
     include_package_data=True,
     zip_safe=False,
-    author='Rafael Vescovi, Hanyu Li, Nicola Ferrier, Thomas Uram, Wushi Dong, Murat Keceli',
+    author='Rafael Vescovi, Hanyu Li, Jeff Kinnison, Nicola Ferrier, Thomas Uram, Wushi Dong, Murat Keceli',
     author_email='ravescovi@anl.gov',
-    description='AutoEM',
-    keywords=['Electron Microscopy', 
+    description='Exascale pipeline for processing neural microscopy data.',
+    keywords=['Electron Microscopy',
               'brain',
               'flood fill netword',
               'imaging'],
-    download_url='http://github.com/ravescovi/autoem',
+    download_url='http://github.com/ravescovi/HappyNeuron',
     license='BSD-3',
     platforms='Any',
     classifiers=[
