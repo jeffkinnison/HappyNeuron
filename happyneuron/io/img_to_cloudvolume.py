@@ -327,7 +327,8 @@ def img2cv(input, output, mode='image', ext='.tif', resolution=(10, 10, 10),
     LOGGER.info('Done')
 
 
-if __name__ == '__main__':
+def main():
+    """Command line entry point to convert images to a CloudVolume layer."""
     args = parse_args()
     img2cv(args.input,
            args.output,
@@ -342,3 +343,7 @@ if __name__ == '__main__':
            memory_limit=args.memory_limit,
            offset=args.offset,
            quiet=args.quiet)
+
+
+if __name__ == '__main__':
+    main()

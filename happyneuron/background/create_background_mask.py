@@ -399,7 +399,8 @@ def create_background_mask(input, output, resolution=(10, 10, 10), mip=0,
 
     LOGGER.info('Done.')
 
-if __name__ == '__main__':
+
+def main():
     args = parse_args()
     create_background_mask(
         args.input,
@@ -413,3 +414,7 @@ if __name__ == '__main__':
         memory_limit=args.memory_limit,
         offset=args.offset,
         quiet=args.quiet)
+
+
+if __name__ == '__main__':
+    main()
