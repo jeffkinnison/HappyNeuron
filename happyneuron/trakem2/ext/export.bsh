@@ -1,0 +1,107 @@
+/**
+ * Call
+ *
+ * xvfb-run -a ./ImageJ-linux64 -Ddir=<project directory> -Dfile=<import file>  -- --no-splash import-and-align.bsh
+ *
+ * on the cluster with absolute paths, e.g.
+ *
+ * ${HOME}/bin/xvfb-run -a ${HOME}/packages/Fiji.app/fiji-linux64 \
+ *   -Xms10g -Xmx10g -Ddir=${HOME}/AL-FIB-Z0712-12/0-99 \
+ *   -Dfile=${HOME}/AL-FIB-Z0712-12/0-99/import.txt  -- --no-splash \
+ *   ${HOME}/AL-FIB-Z0712-12/AL-FIB-Z0712-12/import-and-align.bsh
+ * 
+ * @author Stephan Saalfeld <saalfeld@mpi-cbg.de>
+ */
+
+import ini.trakem2.ControlWindow;
+import ini.trakem2.Project;
+import ini.trakem2.display.Layer;
+import ini.trakem2.display.Patch;
+import ini.trakem2.utils.Filter;
+import ij.ImagePlus;
+import java.lang.Runtime;
+import java.util.ArrayList;
+import java.util.HashSet;
+import mpicbg.trakem2.align.ElasticLayerAlignment;
+import mpicbg.trakem2.align.RegularizedAffineLayerAlignment;
+import ini.trakem2.utils.Saver;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.util.StringTokenizer;
+
+
+runtime = Runtime.getRuntime();
+System.out.println( runtime.availableProcessors() + " cores available for multi-threading" );
+
+dir = System.getProperty("output");
+file = System.getProperty("input");
+range = System.getProperty("range");
+begin = System.getProperty("begin");
+begin = Integer.parseInt(begin);
+
+String output_path = dir + "/output";
+
+StringTokenizer st = new StringTokenizer(range, ",");
+r0 = Integer.parseInt(st.nextToken());
+r1 = Integer.parseInt(st.nextToken());
+
+ControlWindow.setGUIEnabled(false);
+// project = Project.newFSProject("blank", null, dir, false);
+project = Project.openFSProject(dir + "/project.xml", false);
+
+loader = project.getLoader();
+loader.setMipMapsRegeneration(false);
+
+layerset = project.getRootLayerSet();
+layerset.setSnapshotsMode(1);
+layerRange = layerset.getLayers();
+
+/* add a reference layer (pointless gymnastik) */
+
+/* prepare alignment */
+layerRange = layerset.getLayers();
+System.out.println(layerset);
+
+//layerset.setMinimumDimensions();
+
+patches = layerset.getLayer(0).getPatches(true);
+// roi = layerset.get2DBounds();
+System.out.println(patches);
+roi = patches.get(0).getBoundingBox();
+
+System.out.println(roi);
+System.out.println(r0);
+System.out.println(r1);
+System.out.println(begin);
+//for (Layer layer: layerRange)
+saver = new Saver(".tif");
+// beginning = (int)layerset.getLayer(0).getZ();
+for (i = r0; i<=r1; i++)
+{
+  ind = i - begin;
+  layer = layerRange.get(ind);
+  System.out.println(layer);
+  flat = loader.getFlatImage(
+    layer, 
+    roi,
+    1, 
+    0x7fffffff, 
+    ImagePlus.GRAY8,
+    Patch.class,
+    layer.getAll(Patch.class),
+    true,
+    Color.black,
+    null);
+  z = (int)layer.getZ() + begin;
+  //System.out.println(z);
+  String output_str = String.format("%s/S_%04d.tif", new Object[]{output_path, z});
+  System.out.println(output_str);
+  // new Saver(".tif").save(flat, output_str);
+  saver.save(flat, output_str);
+}
+/* save the project */
+// project.saveAs(dir + "/project1.xml", true);
+/* shutdown */
+runtime.exit(0);
+
+
