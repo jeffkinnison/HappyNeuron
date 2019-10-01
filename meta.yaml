@@ -1,10 +1,10 @@
 package:
-  name: autoem
+  name: HappyNeuron
   version: '0.0.1'
 
 source:
-  git_url: https://github.com/ravescovi/autoem.git
-  
+  git_url: https://github.com/ravescovi/HappyNeuron.git
+
 build:
   number: 0
 
@@ -20,9 +20,8 @@ requirements:
 test:
   # Python imports
   imports:
-    - autoem
+    - happyneuron
 
 about:
   license: BSD-3
-  summary: 'Electron Microscopy automation pipeline.'
-
+  summary: 'Exascale pipeline for processing neural microscopy data.'

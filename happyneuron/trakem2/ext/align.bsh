@@ -1,0 +1,334 @@
+/**
+ * Call
+ *
+ * xvfb-run -a ./ImageJ-linux64 -Ddir=<project directory> -Dfile=<import file>  -- --no-splash import-and-align.bsh
+ *
+ * on the cluster with absolute paths, e.g.
+ *
+ * ${HOME}/bin/xvfb-run -a ${HOME}/packages/Fiji.app/fiji-linux64 \
+ *   -Xms10g -Xmx10g -Ddir=${HOME}/AL-FIB-Z0712-12/0-99 \
+ *   -Dfile=${HOME}/AL-FIB-Z0712-12/0-99/import.txt  -- --no-splash \
+ *   ${HOME}/AL-FIB-Z0712-12/AL-FIB-Z0712-12/import-and-align.bsh
+ * 
+ * @author Stephan Saalfeld <saalfeld@mpi-cbg.de>
+ */
+
+import ini.trakem2.ControlWindow;
+import ini.trakem2.Project;
+import ini.trakem2.display.Layer;
+import ini.trakem2.display.Patch;
+import ini.trakem2.utils.Filter;
+import ij.ImagePlus;
+import java.lang.Runtime;
+import java.util.ArrayList;
+import java.util.HashSet;
+import mpicbg.trakem2.align.ElasticLayerAlignment;
+import mpicbg.trakem2.align.RegularizedAffineLayerAlignment;
+import ini.trakem2.utils.Saver;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.util.StringTokenizer;
+
+
+runtime = Runtime.getRuntime();
+System.out.println( runtime.availableProcessors() + " cores available for multi-threading" );
+
+dir = System.getProperty("output");
+file = System.getProperty("input");
+f_pairs = System.getProperty("pairs");
+minOctave = Integer.parseInt(System.getProperty("min"));
+maxOctave = Integer.parseInt(System.getProperty("max"));
+beginning = Integer.parseInt(System.getProperty("begin"));
+System.out.println(f_pairs);
+pairs = null;
+if (f_pairs == null)
+{
+  System.out.println("no pairs");
+  pairs = null;
+}
+else
+{
+  fr = new FileReader(f_pairs);
+  br = new BufferedReader(fr);
+  line = br.readLine();
+  pairs = new ArrayList();
+
+  while(line!=null)
+  {
+    StringTokenizer st = new StringTokenizer(line, ",");
+    pair = new ArrayList();
+    pair.add(Integer.parseInt(st.nextToken()));
+    pair.add(Integer.parseInt(st.nextToken()));
+    pairs.add(pair);
+    System.out.println(line);
+    line = br.readLine();
+  }
+}
+System.out.println(pairs);
+
+/* create output folder */
+f_dir = new File(dir);
+if ( !f_dir.exists())
+  f_dir.mkdirs();
+
+String output_path = dir + "/output";
+f_output = new File(output_path);
+if ( !f_output.exists())
+	f_output.mkdirs();
+
+ControlWindow.setGUIEnabled(false);
+project = Project.newFSProject("blank", null, dir, false);
+loader = project.getLoader();
+loader.setMipMapsRegeneration(false);
+
+layerset = project.getRootLayerSet();
+layerset.setSnapshotsMode(1);
+
+/* add a reference layer (pointless gymnastik) */
+layer = new Layer(project, 0, 1, layerset);
+layerset.add(layer);
+layer.recreateBuckets();
+
+/* import images */
+task = loader.importImages(
+    layerset.getLayer(0),	// the first layer
+    file,					// the absolute file path to the text file with absolute image file paths
+    "\t",					// the column separator  <path> <x> <y> <section index>
+    1.0,					// section thickness, defaults to 1
+    1.0,					// calibration, defaults to 1
+    false,					// whether to homogenize contrast, avoid
+    1.0f,					// scaling factor, default to 1
+    0);						// border width
+
+/* wait until all images have been imported */
+task.join();
+
+/* delete reference layer if it was not part of the import range */
+l0 = layerset.getLayer(0);
+if (l0.getDisplayables(Patch.class).size() == 0)
+  layerset.remove(l0);
+
+/* save the project */
+  project.saveAs(dir + "/project.xml", false);
+
+/* prepare alignment */
+layerRange = layerset.getLayers();
+
+System.out.println(layerset);
+
+filter = new Filter() {
+  public boolean accept(Patch patch) {
+    // return patch.isVisible();
+    return true;
+    }
+  };
+/* affine alignment */
+paramAffine = new RegularizedAffineLayerAlignment.Param();
+
+paramAffine.ppm.sift.initialSigma = 1.6f;
+paramAffine.ppm.sift.steps = 3;
+paramAffine.ppm.sift.minOctaveSize = minOctave;
+paramAffine.ppm.sift.maxOctaveSize = maxOctave;
+paramAffine.ppm.sift.fdSize = 4;
+paramAffine.ppm.sift.fdBins = 8;
+paramAffine.ppm.rod = 0.92f;
+paramAffine.ppm.clearCache = true;
+paramAffine.ppm.maxNumThreadsSift = runtime.availableProcessors();
+
+paramAffine.maxEpsilon = 50.0f;
+paramAffine.minInlierRatio = 0.0f;
+paramAffine.minNumInliers = 12;
+paramAffine.expectedModelIndex = 0;
+paramAffine.multipleHypotheses = true;
+paramAffine.rejectIdentity = true;
+paramAffine.identityTolerance = 0.0f;
+paramAffine.maxNumNeighbors = 10;
+paramAffine.maxNumFailures = 3;
+paramAffine.maxNumThreads = runtime.availableProcessors();
+
+paramAffine.desiredModelIndex = 3;
+paramAffine.regularize = true;
+paramAffine.maxIterationsOptimize = 200;
+paramAffine.maxPlateauwidthOptimize = 2000;
+paramAffine.regularizerIndex = 0;
+paramAffine.visualize = false;
+
+// paramAffine.lambda = 0.1f;
+
+paramElastic = new ElasticLayerAlignment.Param();
+
+paramElastic.layerScale = 0.1f;
+paramElastic.searchRadius = 200;
+paramElastic.blockRadius = 400;
+//paramElastic.resolutionSpringMesh = (int)Math.ceil((double)layerset.get2DBounds().width / 8192.0 * 32.0 * 3);
+paramElastic.resolutionSpringMesh = 64;
+
+System.out.println("SpringMesh");
+System.out.println(paramElastic.resolutionSpringMesh);
+
+paramElastic.minR = 0.1f;
+paramElastic.maxCurvatureR = 1000.0f;
+paramElastic.rodR = 0.92f;
+
+paramElastic.useLocalSmoothnessFilter = true;
+paramElastic.localModelIndex = 3;
+paramElastic.localRegionSigma = 300.0f;
+paramElastic.maxLocalEpsilon = 100.0f;
+paramElastic.maxLocalTrust = 3.0f;
+
+paramElastic.isAligned = true;
+paramElastic.maxNumFailures = 3;
+paramElastic.maxNumNeighbors = 1;
+paramElastic.maxNumThreads = 40;
+
+paramElastic.desiredModelIndex = 1;
+paramElastic.maxIterationsOptimize = 1000;
+paramElastic.maxPlateauwidthOptimize = 400;
+
+paramElastic.stiffnessSpringMesh = 0.1f;
+paramElastic.maxStretchSpringMesh = 2000.0f;
+paramElastic.maxIterationsSpringMesh = 2000;
+paramElastic.maxPlateauwidthSpringMesh = 400;
+paramElastic.dampSpringMesh = 0.9f;
+paramElastic.useLegacyOptimizer = true;
+
+//beginning = (int)layerset.getLayer(0).getZ();
+//System.out.println("begin "+beginning);
+
+if (pairs == null)
+{
+  dynLayerRange = new ArrayList();
+
+  //p0 = pair.get(0) - beginning; 
+  //p1 = pair.get(1) - beginning;
+  //dynLayerRange.add(layerset.getLayer(p0));
+  //dynLayerRange.add(layerset.getLayer(p1));
+  dynLayerRange = layerset.getLayers();
+
+  fixLayerRange = new HashSet();
+  fixLayerRange.add(layerset.getLayer(0));
+
+  emptyLayerRange = new HashSet();
+
+  paramAffine.lambda = 0.1f;
+  new RegularizedAffineLayerAlignment().exec(
+      paramAffine,
+      dynLayerRange,	
+      fixLayerRange,
+      emptyLayerRange,
+      layerset.get2DBounds(),
+      false,
+      true,
+      filter);
+
+  layerset.setMinimumDimensions();
+
+  paramAffine.lambda = 0.01f;
+  new RegularizedAffineLayerAlignment().exec(
+      paramAffine,
+      dynLayerRange,	
+      fixLayerRange,
+      emptyLayerRange,
+      layerset.get2DBounds(),
+      false,
+      true,
+      filter);
+  layerset.setMinimumDimensions();
+
+}
+else
+{
+  for (pair : pairs)
+  {
+    System.out.println(pair);
+
+    dynLayerRange = new ArrayList();
+
+    p0 = pair.get(0) - beginning; 
+    p1 = pair.get(1) - beginning;
+    //ending = 341;
+    //System.out.println("test" + p0);
+    //for(i = p0; i < ending; i++)
+    //{
+    //  dynLayerRange.add(layerset.getLayer(i));
+    //}
+
+
+    dynLayerRange.add(layerset.getLayer(p0));
+    dynLayerRange.add(layerset.getLayer(p1));
+    dynLayerRange.add(layerset.getLayer(p1+1));
+
+    fixLayerRange = new HashSet();
+    fixLayerRange.add(layerset.getLayer(p0));
+
+    emptyLayerRange = new HashSet();
+
+    paramAffine.lambda = 0.1f;
+    new RegularizedAffineLayerAlignment().exec(
+        paramAffine,
+        dynLayerRange,	
+        fixLayerRange,
+        emptyLayerRange,
+        layerset.get2DBounds(),
+        false,
+        true,
+        filter);
+
+    layerset.setMinimumDimensions();
+
+    paramAffine.lambda = 0.01f;
+    new RegularizedAffineLayerAlignment().exec(
+        paramAffine,
+        dynLayerRange,	
+        fixLayerRange,
+        emptyLayerRange,
+        layerset.get2DBounds(),
+        false,
+        true,
+        filter);
+    layerset.setMinimumDimensions();
+
+    // new ElasticLayerAlignment().exec(
+    //   paramElastic,
+    //   project,
+    //   dynLayerRange,
+    //   fixLayerRange,
+    //   emptyLayerRange,
+    //   layerset.get2DBounds(),
+    //   false,
+    //   true,
+    //   filter);
+    // futures = new ArrayList();
+    // for (p : layerset.getDisplayables(Patch.class))
+    //   futures.add(p.updateMipMaps());
+    // for (f : futures)
+    //   f.get();
+    // layerset.setMinimumDimensions();
+  }
+}
+
+// roi = layerset.get2DBounds();
+// for (Layer layer: layerRange)
+// {
+//   flat = loader.getFlatImage(
+//     layer, 
+//     roi,
+//     1, 
+//     0x7fffffff, 
+//     ImagePlus.GRAY8,
+//     Patch.class,
+//     layer.getAll(Patch.class),
+//     true,
+//     Color.black,
+//     null);
+//   i = (int)layer.getZ();
+//   String output_str = String.format("%s/S_%04d.tif", new Object[]{output_path, i});
+//   System.out.println(output_str);
+//   new Saver(".tif").save(flat, output_str);
+// }
+/* save the project */
+project.saveAs(dir + "/project.xml", true);
+/* shutdown */
+runtime.exit(0);
+
+

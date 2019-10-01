@@ -1,0 +1,151 @@
+// Run with $FIJI_PATH --headless -Dinput=./align.txt -Doutput=./project -- --no-splash montage_macro.bsh
+import ini.trakem2.ControlWindow;
+import ini.trakem2.Project;
+import ini.trakem2.display.Layer;
+import ini.trakem2.display.Patch;
+import ini.trakem2.utils.Filter;
+import ij.ImagePlus;
+import java.lang.Runtime;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import ij.io.FileSaver;
+import ini.trakem2.utils.Saver;
+
+
+import mpicbg.trakem2.align.*;
+import mpicbg.trakem2.transform.*;
+import ini.trakem2.display.*;
+import java.awt.Color;
+import ij.process.ImageProcessor;
+import ini.trakem2.io.ImageSaver;
+import ini.trakem2.persistence.Loader;
+import java.awt.Rectangle;
+
+runtime = Runtime.getRuntime();
+System.out.println( runtime.availableProcessors() + " cores available for multi-threading" );
+
+file = System.getProperty("input");
+dir = System.getProperty("output");
+minOctave = Integer.parseInt(System.getProperty("min"));
+maxOctave = Integer.parseInt(System.getProperty("max"));
+
+/* create output folder */
+f_dir = new File(dir);
+if ( !f_dir.exists())
+	f_dir.mkdirs();
+
+ControlWindow.setGUIEnabled(false);
+project = Project.newFSProject("blank", null, dir, false);
+loader = project.getLoader();
+loader.setMipMapsRegeneration(false);
+layerset = project.getRootLayerSet();
+
+layerset.setSnapshotsMode(1);
+
+/* add a reference layer (pointless gymnastik) */
+layer = new Layer(project, 0, 1, layerset);
+layerset.add(layer);
+layer.recreateBuckets();
+
+/* import images */
+task = loader.importImages(
+		layerset.getLayer(0),	// the first layer
+		file,					// the absolute file path to the text file with absolute image file paths
+		"\t",					// the column separator  <path> <x> <y> <section index>
+		1.0,					// section thickness, defaults to 1
+		1.0,					// calibration, defaults to 1
+		false,					// whether to homogenize contrast, avoid
+		1.0f,					// scaling factor, default to 1
+		0);						// border width
+
+/* wait until all images have been imported */
+task.join();
+
+l0 = layerset.getLayer(0);
+if (l0.getDisplayables(Patch.class).size() == 0)
+	layerset.remove(l0);
+
+/* save the project */
+	// project.saveAs(dir + "/project.xml", false);
+
+
+/* prepare montage */
+layerRange = layerset.getLayers();
+
+tilesAreInPlace = true;
+largestGraphOnly = false;
+hideDisconnectedTiles = false;
+deleteDisconnectedTiles = false;
+sloppyOverlapTest = false;
+
+Align.ParamOptimize p;
+
+p = new Align.ParamOptimize().clone();
+p.rejectIdentity = true;
+p.regularize = true;
+p.sift.minOctaveSize = minOctave;
+p.sift.maxOctaveSize = maxOctave;
+
+System.out.println(layerRange);  
+String output_path = dir + "/output";
+f_output = new File(output_path);
+if ( !f_output.exists())
+	f_output.mkdirs();
+
+//AlignTask.montageLayers(
+//	p,
+//	layerRange,
+//	tilesAreInPlace,
+//	largestGraphOnly,
+//	hideDisconnectedTiles,
+//	deleteDisconnectedTiles,
+//	sloppyOverlapTest
+//);
+
+for (Layer layer: layerRange)
+{
+	//layer = layerset.getLayer((double)i);
+	patches = layer.getPatches(true);
+	fixedPatches = new ArrayList();
+	fixedPatches.add(patches.get(0));
+	AlignTask.alignPatches(
+		p,
+		patches,
+		fixedPatches,
+		tilesAreInPlace,
+		largestGraphOnly,
+		hideDisconnectedTiles,
+		deleteDisconnectedTiles
+	);
+  Display.repaint(layer);
+// }
+// for (Layer layer: layerRange)
+// {
+	patches = layer.getPatches(false);
+	roi = new Rectangle();
+	for (Patch p: patches)
+	{
+		roi = roi.union(p.getBoundingBox());
+	}
+	System.out.println(roi);
+
+	flat = loader.getFlatImage(
+		layer, 
+		roi,
+		1, 
+		0x7fffffff, 
+		ImagePlus.GRAY8,
+		Patch.class,
+		layer.getAll(Patch.class),
+		true,
+		Color.black,
+		null);
+
+	i = (int)layer.getZ();
+	String output_str = String.format("%s/S_%04d.tif", new Object[]{output_path, i});
+	System.out.println(output_str);
+	new Saver(".tif").save(flat, output_str);
+}
+// project.saveAs(dir + "/project.xml", true);
+runtime.exit(0);
