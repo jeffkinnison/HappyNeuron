@@ -1,6 +1,6 @@
 package:
   name: HappyNeuron
-  version: '0.0.1'
+  version: '0.0.2'
 
 source:
   git_url: https://github.com/ravescovi/HappyNeuron.git
@@ -24,4 +24,4 @@ test:
 
 about:
   license: BSD-3
-  summary: 'Exascale pipeline for processing neural microscopy data.'
+  summary: 'HPC Automated Pipeline for Processing Yotta Neurons'
