@@ -1,6 +1,6 @@
-# autoem
+# FloodFillNetwork
 
-Wrappers for FFN
+Wrappers for Google FloodFillNetwork (FFN) on a single workstation
 
 
 For Training:

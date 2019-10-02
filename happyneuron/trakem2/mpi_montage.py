@@ -89,11 +89,11 @@ def mpi_montage(input, output, min_octave=1024, max_octave=2048, fiji='fiji'):
     # On rank 0, split the contents of the trakem2 input file evenly across
     # SIZE files and find the ImageJ script to run.
     if RANK == 0:
-        os.makedirs(args.output, exist_ok=True)
+        os.makedirs(output, exist_ok=True)
         resource_path = 'ext/montage_macro.bsh'
         bsh_path = pkg_resources.resource_filename(__name__, resource_path)
         logging.warning('macro: %s', bsh_path)
-        split_aligntxt(args.input, args.output)
+        split_aligntxt(input, output)
     else:
         bsh_path = None
 
@@ -101,7 +101,7 @@ def mpi_montage(input, output, min_octave=1024, max_octave=2048, fiji='fiji'):
     bsh_path = COMM.bcast(bsh_path, 0)
 
     # Execute trakem2 image montaging on each rank in parallel.
-    rank_input = os.path.join(args.output, 'align_%d.txt' % RANK)
+    rank_input = os.path.join(output, 'align_%d.txt' % RANK)
     command = '%s --headless -Dinput=%s -Doutput=%s -Dmin=%d -Dmax=%d -- --no-splash %s' % (
       fiji, rank_input, output, min_octave, max_octave, bsh_path)
     print(command)

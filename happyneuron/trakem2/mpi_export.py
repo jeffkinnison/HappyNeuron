@@ -104,13 +104,13 @@ def mpi_export(input, output, image_range=None, fiji='fiji'):
     # On rank 0, create the output directory, get the path to the ImageJ
     # script to run, and split the commands enevly among the ranks.
     if RANK == 0:
-        os.makedirs(args.output, exist_ok=True)
+        os.makedirs(output, exist_ok=True)
         resource_path = 'ext/export.bsh'
         bsh_path = pkg_resources.resource_filename(__name__, resource_path)
         logging.warning('macro: %s', bsh_path)
 
         # Select and split a subset of images if a range is passed.
-        if not args.range:
+        if not image_range:
             key_sublist = get_keys(input)
         else:
             sub_range = image_range
