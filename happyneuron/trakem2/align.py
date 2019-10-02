@@ -22,7 +22,7 @@ def parse_args(args=None):
                         help='path to pairs definition file')
     parser.add_argument('--min', default=1024, type=int,
                         help='minimum image size for SIFT feature extraction')
-    parser.add_argument('--max', default=2048, type=int
+    parser.add_argument('--max', default=2048, type=int,
                         help='maximum image size for SIFT feature extraction')
     parser.add_argument('--begin', default=0, type=int,
                         help='the index of the first image to align')
