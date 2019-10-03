@@ -22,7 +22,7 @@ def parse_args(args=None):
                         help='path to pairs definition file')
     parser.add_argument('--min', default=1024, type=int,
                         help='minimum image size for SIFT feature extraction')
-    parser.add_argument('--max', default=2048, type=int
+    parser.add_argument('--max', default=2048, type=int,
                         help='maximum image size for SIFT feature extraction')
     parser.add_argument('--begin', default=0, type=int,
                         help='the index of the first image to align')
@@ -53,18 +53,18 @@ def align(input, output, pairs=None, min_octave=1024, max_octave=2048,
         Path to an ImageJ-linux64 executable.
     """
     # Set up the output directory and get the ImageJ script to run.
-    os.makedirs(args.output, exist_ok=True)
+    os.makedirs(output, exist_ok=True)
     resource_path = 'ext/align.bsh'
     bsh_path = pkg_resources.resource_filename(__name__, resource_path)
     logging.warning('macro: %s', bsh_path)
 
     # Set up the align command.
-    if args.pairs:
+    if pairs:
         command = '%s --headless -Dinput=%s -Doutput=%s -Dpairs=%s -Dmin=%d -Dmax=%d -Dbegin=%d -- --no-splash %s' % (
-            args.fiji, args.input, args.output, args.pairs, args.min, args.max, args.begin, bsh_path)
+            fiji, input, output, pairs, min_octave, max_octave, begin, bsh_path)
     else:
         command = '%s --headless -Dinput=%s -Doutput=%s -Dmin=%d -Dmax=%d -Dbegin=%d -- --no-splash %s' % (
-            args.fiji, args.input, args.output, args.min, args.max, args.begin, bsh_path)
+            fiji, input, output, min_octave, max_octave, begin, bsh_path)
 
     # Align the volume.
     print(command)
@@ -73,8 +73,8 @@ def align(input, output, pairs=None, min_octave=1024, max_octave=2048,
 
 def main():
     args = parse_args()
-    align(input,
-          output,
+    align(args.input,
+          args.output,
           pairs=args.pairs,
           min_octave=args.min,
           max_octave=args.max,

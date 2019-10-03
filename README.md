@@ -1,7 +1,11 @@
 # HPC Automated Pipeline Processing Yotta Neurons
 
-This library aim to provide integration of different libraries used for neuroscience with the current US HPC facilities.
+This library aim to provide integration of different libraries used for neuroscience with HPC facilities.
 
+Currently the library is organized in 3 levels:
+* Unified install and env system for all third part applications used
+* Stand alone application wrappers that can be invoked by terminal or imported as a library
+* Automated execution functions using ALCF Balsam
 
 
 ## Getting Started
@@ -78,12 +82,6 @@ A step by step series of examples that tell you how to get a development env run
 
 
 
-## Deployment
-
-The folder macros will have terminal callable scripts and the folder autoem will have the libraries involved.
-On a crude fashion, each item of the list bellow should be a blackbox (script with defined inputs/outputs).
-Those scripts should be either callable from a MPI compatible machine or a single workstation.
-
 
 ## Versioning
 
@@ -94,6 +92,7 @@ We use [SemVer](http://semver.org/) for versioning. For the versions available, 
 * **Rafael Vescovi** - *Initial work*
 * **Hanyu Li** - *Initial work*
 * **Murat Keceli** - *Initial work*
+* **Jeff Kinnisson** - *Initial work*
 * **Bobby Kasthuri** - *Initial work*
 * **Nicola Ferrier** - *Initial work*
 * **Rafael Vescovi** - *Initial work*
@@ -106,8 +105,8 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 
 ## Acknowledgments
 
-* University of Chicago
 * Argonne National Laboratories
+* University of Chicago
 * Harvard University
-* Google
 * Princeton University
+* Google
