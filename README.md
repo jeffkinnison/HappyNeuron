@@ -24,39 +24,32 @@ A step by step series of examples that tell you how to get a development env run
 
 Say what the step will be
 
-```
-pip install . -e
-```
+
 ### Building your preamble at Theta HPC.
 
 A step by step series of examples that tell you how to get a development env running
 
-Say what the step will be
-
-```
-pip install . -e
-```
 
 ## List of Macros in workflow form
 
 ### Data Acquisition
-- [ ] Generate dataset Preview
+- [x] Generate dataset Preview
 - [ ] Generate dataset quality check
 - [ ] Generate bad-image list
 
 ### Tile Image Processing
-- [ ] Correct each image individually
-- [ ] Correct brightness individually
+- [x] Correct each image individually
+- [x] Correct brightness individually
 
 ### Slice Montage (X-Y dimension)
-- [ ] Pairwise aligment
-- [ ] Global Optimzation
-- [ ] Stitching
+- [x] Pairwise aligment
+- [x] Global Optimzation
+- [x] Stitching
 
 ### Alignment (Z dimension)
-- [ ] Pairwise aligment
-- [ ] Global Optimzation
-- [ ] Cube rendering
+- [x] Pairwise aligment
+- [x] Global Optimzation
+- [x] Cube rendering
 
 ### Visualization 
 - [x] Cube cropping (removing borders)
@@ -64,23 +57,24 @@ pip install . -e
 - [x] Inset cropping
 
 ### Training
-- [ ] Inset Manual annotation
-- [ ] FFN compute_partitions
-- [ ] FFN build_coordinates
-- [ ] FFN train
+- [x] Inset Manual annotation
+- [x] FFN compute_partitions
+- [x] FFN build_coordinates
+- [x] FFN train
 
 ### Inference
-- [ ] Splice data
-- [ ] Inference
-- [ ] Merge
+- [x] Splice data
+- [x] Inference
+- [x] Merge
 
 ### Final Visualization
-- [ ] Precompute data
-- [ ] Precompute Labels
-- [ ] Generate Mesh
+- [x] Precompute data
+- [x] Precompute Labels
+- [x] Generate Mesh
 
 ### Other Macros
-- [ ] webKnossos injection/extraction
+- [x] Knossos injection/extraction
+- [x] webKnossos injection/extraction
 
 
 
