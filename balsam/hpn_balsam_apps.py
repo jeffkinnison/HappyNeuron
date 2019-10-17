@@ -1,15 +1,29 @@
 import sys
+
+
+##BALSAM IMPORTS
 sys.path.insert(0,'/soft/datascience/Balsam/0.3.5.1/env/lib/python3.6/site-packages/')
 sys.path.insert(0,'/soft/datascience/Balsam/0.3.5.1/')
+import balsam
+from balsam_helper import *
 
 
+##FFN IMPORTS
 sys.path.insert(0,'/gpfs/mira-home/keceli/ffn/keceli_ffn/')
 sys.path.insert(0,'/lus/theta-fs0/projects/connectomics_aesp/keceli/pip_ffn/')
 sys.path.insert(0,'/soft/datascience/tensorflow/tf1.13/')
 
 
-import balsam
-from balsam_helper import *
+##HPN IMPORTS
+sys.path.insert(0,'/lus/theta-fs0/projects/connectomics_aesp/software/HappyNeuron/')
+
+import happyneuron as hpn
+
+
+
+
+
+
 
 # APP DATABASE
 ## No need to edit those. We will keep then up to date.
@@ -21,35 +35,61 @@ env_preamble = '/lus/theta-fs0/projects/connectomics_aesp/software/HappyNeuron/m
 
 ##TRAKEM2 APPS
 
-##phasing out to be a single function inside the montage job
-##can be run on a single stupid node
-# add_app(name='trakem2_pre_tiles',
-#         executable='python /lus/theta-fs0/projects/connectomics_aesp/software/klab_utils/trakem2/preprocess_tiles.py',
-#         description='TRAKEM2 Create Montage script',
-#         envscript='/lus/theta-fs0/projects/connectomics_aesp/software/macros_theta/theta_balsam_preamble.sh')
 
+##############
+##I don't like that but I need to add cv2 here and this env just don't have it.
+sys.path.insert(0,'/lus/theta-fs0/projects/connectomics_aesp/software/neuro_env_36/lib/python3.6/site-packages/')
+import happyneuron as hpn
+from happyneuron.trakem2.preprocess_tiles import *
+##############
 
-##need 1 job / node
+##need 4 job / node
 add_app(name='trakem_montage',
-        executable='python /lus/theta-fs0/projects/connectomics_aesp/software/klab_utils/trakem2/mpi_montage.py',
+        executable='python /lus/theta-fs0/projects/connectomics_aesp/software/HappyNeuron/happyneuron/trakem2/mpi_montage.py',
         description='TRAKEM2 MPI montage script',
         envscript=env_preamble)
 
+def sem_montage_job(workflow_name, raw_folder, process_folder, target='', min=1024, max=2048, fiji="/lus/theta-fs0/projects/connectomics_aesp/software/Fiji.app/ImageJ-linux64"):
+    emp = EMTilePreprocessor(raw_folder, process_folder+'align_raw.txt')
+    emp.run()
+    
+    if target=='':
+        target=process_folder
+    
+    montage_args = ''
+    montage_args += f' {process_folder}/align_raw.txt '
+    montage_args += f' {target} '
+    montage_args += f' --min {min} '
+    montage_args += f' --max {max} '
+    montage_args += f' --fiji {fiji} '
+    print(montage_args)
+    add_job(name=f'montage',
+        workflow=workflow_name,
+        application='trakem_montage',
+        args=montage_args,
+        ranks_per_node=1,
+        environ_vars='OMP_NUM_THREADS=32')
+    print('Trakem2 Montage Job added')
+
+
+
+
 ##can be run on a single stupid node
+##will be phased out soon
 add_app(name='trakem2_proc_folder',
-        executable='python /lus/theta-fs0/projects/connectomics_aesp/software/klab_utils/trakem2/preprocess_stack.py',
+        executable='python /lus/theta-fs0/projects/connectomics_aesp/software/HappyNeuron/happyneuron/trakem2/preprocess_stack.py',
         description='TRAKEM2 create pre aligment script',
         envscript=env_preamble)
 
 ##need 1 job / node
 add_app(name='trakem2_align',
-        executable='python /lus/theta-fs0/projects/connectomics_aesp/software/klab_utils/trakem2/align.py',
+        executable='python /lus/theta-fs0/projects/connectomics_aesp/software/HappyNeuron/happyneuron/trakem2/align.py',
         description='TRAKEM2 aligment script',
         envscript=env_preamble)
 
 ##need 1 job / node
 add_app(name='trakem2_export',
-        executable='python /lus/theta-fs0/projects/connectomics_aesp/software/klab_utils/trakem2/mpi_export.py',
+        executable='python /lus/theta-fs0/projects/connectomics_aesp/software/HappyNeuron/happyneuron/trakem2/mpi_export.py',
         description='TRAKEM2 MPI export script',
         envscript=env_preamble)
 
