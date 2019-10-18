@@ -107,6 +107,7 @@ def add_job(
     job.environ_vars   = environ_vars
     job.data           = {}
     job.save()
+    return job.job_id
     
 def submit(project='datascience',queue='debug-flat-quad',nodes=1,wall_minutes=30,job_mode='mpi',wf_filter=''):
     """
