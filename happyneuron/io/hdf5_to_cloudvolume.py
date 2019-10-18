@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Convert a sequence of images into a CloudVolume archive.
+"""Convert a monolithic HDF5 file to a CloudVolume layer.
 
 The volume is broken into "layers", or small non-overlapping sub-sequences of
 images that can be added to CloudVolume in parallel.
@@ -14,16 +14,15 @@ initialize_cloudvolume
     Create a new CloudVolume archive.
 write_layer
     Write a layer to CloudVolume.
-main
+hdf52cv
     Create and write data to a new CloudVolume archive.
 
 Dependencies
 ------------
 cloud-volume
-dill
+h5py
 mpi4py
 numpy
-scikit-image
 """
 
 from __future__ import print_function
@@ -64,8 +63,8 @@ def parse_args():
                    help='path to write the CloudVolume')
     p.add_argument('--mode', type=str, choices=['image', 'segmentation'],
                    default='image', help='write mode for configuring the info file')
-    p.add_argument('--ext', type=str, default='.tif',
-                   help='extension of the images to load')
+    p.add_argument('--key', type=str, default='image',
+                   help='name of the dataset to convert to CloudVolume')
     p.add_argument('--resolution', type=int, nargs='*', default=[10, 10, 10],
                    help='resolution of the dataset')
     p.add_argument('--mip', type=int, default=0,
@@ -87,15 +86,19 @@ def parse_args():
     return p.parse_args()
 
 
-def load_layer(imagelist, z_start, z_end):
+def load_layer(h5file, key, z_start, z_end):
     """Load a sequence of images.
 
     Parameters
     ----------
     imagelist : list of str
         Sorted list of filepaths pointing to images to load.
+    key: str
+        The HDF5 dataset to read.
     z_start : int
         The index of the first image in the layer.
+    z_end : int
+        The index of the last image in the layer.
 
     Returns
     -------
@@ -103,15 +106,7 @@ def load_layer(imagelist, z_start, z_end):
         The (n, h, w) ndarray containing the n sequential images in the layer.
     """
     # Set up the array for preallocation
-    layer = None
-
-    # Load each image in the layer and insert it into the array.
-    for i, img in enumerate(imagelist[z_start:z_end]):
-        img = io.imread(img)
-        if layer is None:
-            layer = np.zeros((int(z_end - z_start),) + img.shape,
-                             dtype=img.dtype)
-        layer[i] += img
+    layer = h5file[key][z_start:z_end]
     LOGGER.info('Loaded images with shape {}.'.format(layer.shape))
     return layer
 
@@ -250,7 +245,7 @@ def write_layer(path, mode, layer, flip_xy, z_start, mip, factor):
         layer = layer[::factor[0], ::factor[1], ::factor[2]]
 
 
-def img2cv(input, output, mode='image', ext='.tif', resolution=(10, 10, 10),
+def hdf52cv(input, output, mode='image', key='image', resolution=(10, 10, 10),
            mip=0, chunk_size=(64, 64, 64), z_step=None, factor=(2, 2, 2),
            flip_xy=False, memory_limit=10000, offset=(0, 0, 0), quiet=False):
     """Create and write data to a new CloudVolume archive."""
@@ -267,18 +262,13 @@ def img2cv(input, output, mode='image', ext='.tif', resolution=(10, 10, 10),
     if not re.search(r'^file://.+$', outpath):
         outpath = 'file://' + outpath
 
-    with h5py.File(input, 'r') as f:
-        img = f['volumes']['labels']['neuron_ids'][:].astype(np.uint32)
-
-    chunk_size = img.shape
-
     # On rank 0, initialize the CloudVolume info file, and load in the list of
     # images to insert into the archive.
-    if True:
-        # imagelist = sorted(glob.glob(os.path.join(input, '*' + ext)))
-        # img = io.imread(imagelist[0])
-        dtype = img.dtype
-        volume_shape = img.shape
+    if RANK == 0:
+        with h5py.File(input, 'r') as f:
+            imagelist = list(range(f[key].shape[0]))
+            dtype = f[key].dtype
+            volume_shape = f[key].shape
         LOGGER.info('Converting {} with shape {} to CloudVolume'.format(input, volume_shape))
         LOGGER.info('Initialized CloudVolume image layer at {}'.format(outpath))
         initialize_cloudvolume(
@@ -291,61 +281,54 @@ def img2cv(input, output, mode='image', ext='.tif', resolution=(10, 10, 10),
             chunk_size,
             mip,
             factor)
-        # LOGGER.info('Broadcasting image list {}.'.format(imagelist))
+        LOGGER.info('Broadcasting image list {}.'.format(imagelist))
     else:
         imagelist = None
         volume_shape = None
 
-    write_layer(
-            outpath,
-            mode,
-            img,
-            flip_xy,
-            0,
-            mip,
-            factor)
     # Send the CloudVolume parameters and list of images to all MPI ranks.
-    # imagelist = COMM.bcast(imagelist, root=0)
-    # volume_shape = COMM.bcast(volume_shape, root=0)
+    imagelist = COMM.bcast(imagelist, root=0)
+    volume_shape = COMM.bcast(volume_shape, root=0)
 
     # Iterate over layers of the volume. Each rank will load and write one
     # layer at a time. If there are fewer ranks than layers, increment to
     # n_ranks + rank and load the layer at that index.
-    # layer_idx = int(RANK * chunk_size[-1])
-    # while layer_idx < volume_shape[0]:
-        # Compute the index of the first image in this layer, including any
-        # offset from the volume origin.
-        # layer_shape = int(min(layer_idx + chunk_size[-1], len(imagelist)))
-        # LOGGER.info('Loading images {}-{}.'.format(layer_idx, layer_idx + layer_shape))
-        # layer = load_layer(imagelist, layer_idx, layer_shape)
+    with h5py.File(input, 'r') as f:
+        layer_idx = int(RANK * chunk_size[-1])
+        while layer_idx < volume_shape[0]:
+            # Compute the index of the first image in this layer, including any
+            # offset from the volume origin.
+            layer_shape = int(min(layer_idx + chunk_size[-1], len(imagelist)))
+            LOGGER.info('Loading images {}-{}.'.format(layer_idx, layer_idx + layer_shape))
+            layer = load_layer(f, key, layer_idx, layer_shape)
 
-    #     if mode == 'segmentation':
-    #         layer = layer.astype(np.uint32)
+            if mode == 'segmentation':
+                layer = layer.astype(np.uint32)
 
-        # Write the layer to the archive.
-    #     LOGGER.info('Writing images {}-{}'.format(layer_idx, layer_idx + layer_shape))
-    #     write_layer(
-    #         outpath,
-    #         mode,
-    #         img,
-    #         flip_xy,
-    #         0,
-    #         mip,
-    #         factor)
+            # Write the layer to the archive.
+            LOGGER.info('Writing images {}-{}'.format(layer_idx, layer_idx + layer_shape))
+            write_layer(
+                outpath,
+                mode,
+                layer,
+                flip_xy,
+                layer_idx,
+                mip,
+                factor)
 
-        # Increment to the next known layer that does not overlap with any
-        # other rank.
-    #     layer_idx += int(SIZE * chunk_size[-1])
+            # Increment to the next known layer that does not overlap with any
+            # other rank.
+            layer_idx += int(SIZE * chunk_size[-1])
     LOGGER.info('Done')
 
 
 def main():
     """Command line entry point to convert images to a CloudVolume layer."""
     args = parse_args()
-    img2cv(args.input,
+    hdf52cv(args.input,
            args.output,
            mode=args.mode,
-           ext=args.ext,
+           key=args.key,
            resolution=args.resolution,
            mip=args.mip,
            chunk_size=args.chunk_size,
