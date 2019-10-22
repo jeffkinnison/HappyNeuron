@@ -49,7 +49,7 @@ add_app(name='trakem_montage',
         description='TRAKEM2 MPI montage script',
         envscript=env_preamble)
 
-def sem_montage_job(workflow_name, raw_folder, process_folder, target='', min=1024, max=2048, fiji="/lus/theta-fs0/projects/connectomics_aesp/software/Fiji.app/ImageJ-linux64"):
+def sem_montage_job(workflow_name, raw_folder, process_folder, target='', min=1024, max=2048, fiji="/lus/theta-fs0/projects/connectomics_aesp/software/Fiji.app/ImageJ-linux64", num_nodes=1):
     emp = EMTilePreprocessor(raw_folder, process_folder+'align_raw.txt')
     emp.run()
     
@@ -66,8 +66,9 @@ def sem_montage_job(workflow_name, raw_folder, process_folder, target='', min=10
     add_job(name=f'montage',
         workflow=workflow_name,
         application='trakem_montage',
+        num_nodes=num_nodes,
         args=montage_args,
-        ranks_per_node=1,
+        ranks_per_node=8,
         environ_vars='OMP_NUM_THREADS=32')
     print('Trakem2 Montage Job added')
 
@@ -95,10 +96,21 @@ add_app(name='trakem2_export',
 
 ##ALIGNTK APPS
 
-add_app(name='aligntk_apply_map',
-        executable='python -m klab_utils.aligntk_mpi_apply_map',
-        description='Distributed FFN training script',
+
+add_app(name='aligntk_gen_mask',
+        executable='python /lus/theta-fs0/projects/connectomics_aesp/software/HappyNeuron/happyneuron/aligntk/gen_mask.py',
+        description='AlignTK mask generator',
         envscript=env_preamble)
+
+add_app(name='aligntk_apply_map',
+        executable='python /lus/theta-fs0/projects/connectomics_aesp/software/HappyNeuron/happyneuron/aligntk/mpi_apply_map.py',
+        description='AlignTK Apply Map',
+        envscript=env_preamble)
+
+
+
+
+
 
 
 ##U-NET APPS
@@ -230,9 +242,15 @@ def generate_balsam_inference_jobs(bbox_list, config_file, workflow_name='ffn_su
 
 
 
-#add_app(name='ffn_build_coordinates',
+add_app(name='ffn_build_coordinates',
+        executable='python /lus/theta-fs0/projects/connectomics_aesp/software/ffn/build_coordinates_mpi.py',
+        description='Distributed FFN build coordinates script',
+        envscript=env_preamble)
 
-#add_app(name='ffn_potato2',
+add_app(name='ffn_compute_partitions',
+        executable='python /lus/theta-fs0/projects/connectomics_aesp/software/ffn/compute_partitions_mpi.py',
+        description='Distributed FFN compute partitions script',
+        envscript=env_preamble)
 
 
 add_app(name='ffn_trainer',
