@@ -49,7 +49,7 @@ add_app(name='trakem_montage',
         description='TRAKEM2 MPI montage script',
         envscript=env_preamble)
 
-def sem_montage_job(workflow_name, raw_folder, process_folder, target='', min=1024, max=2048, fiji="/lus/theta-fs0/projects/connectomics_aesp/software/Fiji.app/ImageJ-linux64", num_nodes=1):
+def trakem_montage_job(workflow_name, raw_folder, process_folder, target='', min=1024, max=2048, fiji="/lus/theta-fs0/projects/connectomics_aesp/software/Fiji.app/ImageJ-linux64", num_nodes=1):
     emp = EMTilePreprocessor(raw_folder, process_folder+'align_raw.txt')
     emp.run()
     
@@ -109,51 +109,21 @@ add_app(name='aligntk_apply_map',
 
 
 
-
-
-
-
-##U-NET APPS
-
-#add_app(name='unet_train')
-
-#add_app(name='unet_infer')
-
 ##FLORIN APPS
 
 #add_app(name='florin_')
 
-##CLOUDVOLUME APPS
-
-#add_app(name='cv_create_layer',
-## --data_path --layer_type --mags --resolution --offset 
-
-#add_app(name='cv_extract_block')
-## --info --mag --offset --volume --file --key
-
-#add_app(name='get_layer_properties')
-##--histogram
-
-#add_app(name='classify_objects')
-
-
-#add_app(name='cv_create_mesh',
-
-#add_app(name='cv_create_skeleton')
-
-##AUTOMO APPS
-
-#add_app(name='automo_preview',
-
-
-
 ##FFN PART!!
 
+add_app(name='ffn_build_coordinates',
+        executable='python /lus/theta-fs0/projects/connectomics_aesp/software/ffn/build_coordinates_mpi.py',
+        description='Distributed FFN build coordinates script',
+        envscript=env_preamble)
 
-#add_#add_app(name='ffn_build_coordinates',
-
-#add_app(name='ffn_potato2',
-
+add_app(name='ffn_compute_partitions',
+        executable='python /lus/theta-fs0/projects/connectomics_aesp/software/ffn/compute_partitions_mpi.py',
+        description='Distributed FFN compute partitions scripts script',
+        envscript=env_preamble)
 
 add_app(name='ffn_trainer',
         executable='python /lus/theta-fs0/projects/connectomics_aesp/software/ffn/train_hvd.py',
@@ -164,6 +134,36 @@ add_app(name='ffn_inference',
         executable='python /lus/theta-fs0/projects/connectomics_aesp/software/ffn/run_inference.py',
         description='FFN inference script',
         envscript=env_preamble)
+
+
+
+def ffn_compute_partitions_job(INPUT_VOLUME, INPUT_VOLUME_DSET, OUTPUT_VOLUME, THRESHOLDS, LOM_RADIUS, MIN_SIZE, workflow=''):
+    comp_args = ''
+    comp_args += f' --input_volume {INPUT_VOLUME}:{INPUT_VOLUME_DSET} '
+    comp_args += f' --output_volume {OUTPUT_VOLUME}:af '
+    comp_args += f' --thresholds {THRESHOLDS} '
+    comp_args += f' --lom_radius {LOM_RADIUS}  '
+    comp_args += f' --min_size {MIN_SIZE} '
+
+    add_job(name=f'comp_parts',
+        workflow=workflow,
+        application='ffn_compute_partitions',
+        args=comp_args,
+        ranks_per_node=1)
+
+def ffn_build_coordinates_job(SAMPLE, PARTITION_DATA, TFRECORDFILE, MARGIN, workflow):
+    build_args = ''
+    build_args += f' --partition_volumes {SAMPLE}:{PARTITION_DATA}:af '
+    build_args += f'  --coordinate_output {TFRECORDFILE} '
+    build_args += f' --margin {MARGIN} '
+
+    add_job(name=f'build_coords',
+        workflow=workflow,
+        application='ffn_build_coordinates',
+        args=build_args,
+        ranks_per_node=1)
+
+
 
 
 from ffn.utils import bounding_box
@@ -226,39 +226,26 @@ def generate_balsam_inference_jobs(bbox_list, config_file, workflow_name='ffn_su
         inference_args += f" --bounding_box 'start {{ x:{start[0]} y:{start[1]} z:{start[2]} }} size {{ x:{size[0]} y:{size[1]} z:{size[2]} }}' "
         add_job(name=f'sub_inference_{i}',
                 workflow=workflow_name,
-                application='inference',
+                application='ffn_inference',
                 args=inference_args,
                 ranks_per_node=1,
                 environ_vars='OMP_NUM_THREADS=32')
 
 
-#app(name='automo_center',
+##CLOUDVOLUME APPS
 
-#add_app(name='automo_search_center',
+#add_app(name='cv_create_layer',
+## --data_path --layer_type --mags --resolution --offset 
 
-#add_app(name='automo_recon',
+#add_app(name='cv_extract_block')
+## --info --mag --offset --volume --file --key
 
-#add_app(name='automo_preview_recon')
+#add_app(name='get_layer_properties')
+##--histogram
 
-
-
-add_app(name='ffn_build_coordinates',
-        executable='python /lus/theta-fs0/projects/connectomics_aesp/software/ffn/build_coordinates_mpi.py',
-        description='Distributed FFN build coordinates script',
-        envscript=env_preamble)
-
-add_app(name='ffn_compute_partitions',
-        executable='python /lus/theta-fs0/projects/connectomics_aesp/software/ffn/compute_partitions_mpi.py',
-        description='Distributed FFN compute partitions script',
-        envscript=env_preamble)
+#add_app(name='classify_objects')
 
 
-add_app(name='ffn_trainer',
-        executable='python /lus/theta-fs0/projects/connectomics_aesp/software/ffn/train_hvd.py',
-        description='Distributed FFN training script',
-        envscript=env_preamble)
+#add_app(name='cv_create_mesh',
 
-add_app(name='ffn_inference',
-        executable='python /lus/theta-fs0/projects/connectomics_aesp/software/ffn/run_inference.py',
-        description='FFN inference script',
-        envscript=env_preamble)
+#add_app(name='cv_create_skeleton')
