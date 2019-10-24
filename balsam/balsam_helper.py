@@ -91,8 +91,8 @@ def add_job(
         'KMP_AFFINITY': 'granularity=fine,verbose,compact,1,0',
     }):
     from balsam.launcher.dag import BalsamJob
-    environ_vars.update(tf_environ_vars)
-    environ_vars = ':'.join(f"{k}={v}" for k,v in environ_vars.items())
+    #environ_vars.update(tf_environ_vars)
+    #environ_vars = ':'.join(f"{k}={v}" for k,v in environ_vars.items())
     job                  = BalsamJob()
     job.name             = name
     job.workflow         = workflow

@@ -4,18 +4,21 @@ import glob
 from pprint import pprint
 
 
-def main():
+def preprocess_parse():
   parser = argparse.ArgumentParser()
   parser.add_argument('image_dir', default=None, type=str)
   parser.add_argument('output_dir', default=None, type=str)
-  # parser.add_argument('--groups', default=1, type=int)
   parser.add_argument('--group_size', default=12, type=int)
-  args = parser.parse_args()
-
+  image_dir = args.image_dir
+  output_dir = args.output_dir
+  group_size = args.group_size
+  return image_dir, output_dir, group_size
+  
+def preprocess_main(image_dir, output_dir, group_size):
   # Write complete set
-  f_images = os.path.join(args.output_dir, 'images.lst')
-  f_pairs = os.path.join(args.output_dir, 'pairs.lst')
-  image_list = [s.split('.')[0] for s in glob.glob1(args.image_dir, '*.tif*')]
+  f_images = os.path.join(output_dir, 'images.lst')
+  f_pairs = os.path.join(output_dir, 'pairs.lst')
+  image_list = [s.split('.')[0] for s in glob.glob1(image_dir, '*.tif*')]
   image_list.sort()
   with open(f_images, 'w') as f1:
     [f1.write(im+'\n') for im in image_list]
@@ -28,18 +31,17 @@ def main():
   # Write individual groups
   image_sets = {}
   pairs_sets = {}
-  groups = len(image_list)  // args.group_size + 1
+  groups = len(image_list)  // group_size + 1
 
-  
   # set_size = len(image_list) // args.groups + 1
 
   for i in range(groups):
-    f_images = os.path.join(args.output_dir, 'images%d.lst' % i)
-    f_pairs = os.path.join(args.output_dir, 'pairs%d.lst' % i)
+    f_images = os.path.join(output_dir, 'images%d.lst' % i)
+    f_pairs = os.path.join(output_dir, 'pairs%d.lst' % i)
     if i == 0:
-      image_sets[i] = [im for im in image_list[i*args.group_size:(i+1)*args.group_size]]
+      image_sets[i] = [im for im in image_list[i*group_size:(i+1)*group_size]]
     else:
-      image_sets[i] = [im for im in image_list[i*args.group_size-1:(i+1)*args.group_size]]
+      image_sets[i] = [im for im in image_list[i*group_size-1:(i+1)*group_size]]
 
     with open(f_images, 'w') as f1:
       [f1.write(im+'\n') for im in image_sets[i]]
@@ -50,8 +52,3 @@ def main():
           + image_sets[i][j] + '_' + image_sets[i][j+1] + '\n')
 
   pprint(image_sets)
-    
-
-
-if __name__ == '__main__':
-  main()
