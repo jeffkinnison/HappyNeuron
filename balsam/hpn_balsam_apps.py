@@ -56,6 +56,10 @@ def trakem_montage_job(workflow_name, raw_folder, process_folder, target='', min
     if target=='':
         target=process_folder
     
+    #todo.. implement workflow pass for nule workflow names + uid
+    if workflow=='':
+        pass
+    
     montage_args = ''
     montage_args += f' {process_folder}/align_raw.txt '
     montage_args += f' {target} '
@@ -137,7 +141,7 @@ add_app(name='ffn_inference',
 
 
 
-def ffn_compute_partitions_job(INPUT_VOLUME, INPUT_VOLUME_DSET, OUTPUT_VOLUME, THRESHOLDS, LOM_RADIUS, MIN_SIZE, workflow=''):
+def ffn_compute_partitions_job(INPUT_VOLUME, INPUT_VOLUME_DSET, OUTPUT_VOLUME, THRESHOLDS, LOM_RADIUS, MIN_SIZE, workflow='',num_nodes=1):
     comp_args = ''
     comp_args += f' --input_volume {INPUT_VOLUME}:{INPUT_VOLUME_DSET} '
     comp_args += f' --output_volume {OUTPUT_VOLUME}:af '
@@ -147,11 +151,12 @@ def ffn_compute_partitions_job(INPUT_VOLUME, INPUT_VOLUME_DSET, OUTPUT_VOLUME, T
 
     add_job(name=f'comp_parts',
         workflow=workflow,
+        num_nodes=num_nodes,
         application='ffn_compute_partitions',
         args=comp_args,
         ranks_per_node=1)
 
-def ffn_build_coordinates_job(SAMPLE, PARTITION_DATA, TFRECORDFILE, MARGIN, workflow):
+def ffn_build_coordinates_job(SAMPLE, PARTITION_DATA, TFRECORDFILE, MARGIN, workflow, num_nodes=1):
     build_args = ''
     build_args += f' --partition_volumes {SAMPLE}:{PARTITION_DATA}:af '
     build_args += f'  --coordinate_output {TFRECORDFILE} '
@@ -159,10 +164,30 @@ def ffn_build_coordinates_job(SAMPLE, PARTITION_DATA, TFRECORDFILE, MARGIN, work
 
     add_job(name=f'build_coords',
         workflow=workflow,
+        num_nodes=num_nodes,
         application='ffn_build_coordinates',
         args=build_args,
         ranks_per_node=1)
 
+def ffn_train_network_job(TFRECORDFILE, GROUNDTRUTH, GRAYSCALE, BATCHSIZE, OPTIMIZER, TIMESTAMP, TRAINDIR, DEPTH, FOV, DELTA, workflow):
+    train_args = ''
+    train_args += f' --train_coords {TFRECORDFILE} '
+    train_args += f' --data_volumes valdation1:{GRAYSCALE}:raw '
+    train_args += f' --label_volumes valdation1:{GROUNDTRUTH}:stack '
+    train_args += f' --model_name convstack_3d.ConvStack3DFFNModel '
+    #myargs += f' --model_args \"\{\\"depth\\": {DEPTH}, \\"fov_size\\": [{FOV}], \\"deltas\\": [{DELTA}]\}\"'
+    train_args += ''' --model_args "{\\"depth\\": 12, \\"fov_size\\": [33, 33, 33], \\"deltas\\": [8, 8, 8]}"'''
+    train_args += ' --image_mean 128 --image_stddev 33 '
+    train_args += ' --max_steps 400 --summary_rate_secs 60 ' 
+    train_args += f' --batch_size {BATCHSIZE} '
+    train_args += f' --optimizer {OPTIMIZER} '
+    train_args += ' --num_intra_threads 64 --num_inter_threads 1 '
+    train_args += f' --train_dir {TRAINDIR} '
+
+    add_job(name='test_train',
+            workflow=workflow,
+            application='ffn_trainer',
+            args=train_args)
 
 
 
