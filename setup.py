@@ -18,9 +18,8 @@ def collect_entry_points():
                         if re.search(r'^def main[(][)]:', line):
                             cmdname = os.path.splitext(fname)[0]
                             modulepath = os.path.splitext(fpath.replace(base, '').strip('/').replace('/', '.'))[0]
-                            entry_points.append('{} = {}:main'.format(cmdname, modulepath))
+                            entry_points.append(r'{}.{} = {}:main'.format('hpn', cmdname, modulepath))
     return entry_points
-
 
 setup(
     name='HappyNeuron',
@@ -28,7 +27,7 @@ setup(
     version=open('VERSION').read().strip(),
     include_package_data=True,
     zip_safe=False,
-    author='Rafael Vescovi, Hanyu Li, Jeff Kinnison, Nicola Ferrier, Thomas Uram, Misha Salin, Murat Keceli',
+    author='Rafael Vescovi, Hanyu Li, Jeff Kinnison, Nicola Ferrier, Thomas Uram, Wushi Dong, Murat Keceli',
     author_email='ravescovi@anl.gov',
     description='Exascale pipeline for processing neural microscopy data.',
     keywords=['neuroscience',
@@ -52,7 +51,5 @@ setup(
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5'],
-    entry_points={
-        'console_scripts': collect_entry_points()
-    }
+    entry_points={'console_scripts': collect_entry_points()}
 )
