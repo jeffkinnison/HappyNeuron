@@ -1,2 +1,0 @@
-# Balsam workflow for HAPPYNeurons
-

@@ -28,7 +28,7 @@ setup(
     version=open('VERSION').read().strip(),
     include_package_data=True,
     zip_safe=False,
-    author='Rafael Vescovi, Hanyu Li, Jeff Kinnison, Nicola Ferrier, Thomas Uram, Wushi Dong, Murat Keceli',
+    author='Rafael Vescovi, Hanyu Li, Jeff Kinnison, Nicola Ferrier, Thomas Uram, Misha Salin, Murat Keceli',
     author_email='ravescovi@anl.gov',
     description='Exascale pipeline for processing neural microscopy data.',
     keywords=['neuroscience',
