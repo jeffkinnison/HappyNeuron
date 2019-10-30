@@ -27,7 +27,7 @@ setup(
     version=open('VERSION').read().strip(),
     include_package_data=True,
     zip_safe=False,
-    author='Rafael Vescovi, Hanyu Li, Jeff Kinnison, Nicola Ferrier, Thomas Uram, Wushi Dong, Murat Keceli',
+    author='Rafael Vescovi, Hanyu Li, Jeff Kinnison, Nicola Ferrier, Thomas Uram, Misha Salim, Murat Keceli',
     author_email='ravescovi@anl.gov',
     description='Exascale pipeline for processing neural microscopy data.',
     keywords=['neuroscience',
@@ -44,12 +44,9 @@ setup(
         'Development Status :: 4 - Beta',
         'License :: OSI Approved :: BSD License',
         'Intended Audience :: Science/Research',
-        'Intended Audience :: Education',
         'Intended Audience :: Developers',
         'Natural Language :: English',
         'Operating System :: Linux',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5'],
+        'Programming Language :: Python :: 3.6'],
     entry_points={'console_scripts': collect_entry_points()}
 )
