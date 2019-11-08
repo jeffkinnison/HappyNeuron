@@ -107,7 +107,8 @@ def load_layer(imagelist, z_start, z_end):
 
     # Load each image in the layer and insert it into the array.
     for i, img in enumerate(imagelist[z_start:z_end]):
-        img = io.imread(img)
+        img = io.imread(img,
+            plugin='tifffile' if '.tif' in os.path.splitext(imagelist[0])[1] else None)
         if layer is None:
             layer = np.zeros((int(z_end - z_start),) + img.shape,
                              dtype=img.dtype)
@@ -253,7 +254,36 @@ def write_layer(path, mode, layer, flip_xy, z_start, mip, factor):
 def img2cv(input, output, mode='image', ext='.tif', resolution=(10, 10, 10),
            mip=0, chunk_size=(64, 64, 64), z_step=None, factor=(2, 2, 2),
            flip_xy=False, memory_limit=10000, offset=(0, 0, 0), quiet=False):
-    """Create and write data to a new CloudVolume archive."""
+    """Create and write data to a new CloudVolume archive.
+
+    Parameters
+    ----------
+    input : str or list of str
+        The path to a file containing images or a list of image filepaths.
+    output : str
+        Path to create the CloudVolume layer at.
+    mode : {'image','segmentation'}
+        Type of CloudVolume layer to create.
+    ext : str
+        The image extension to search for if ``input`` is a directory of
+        images.
+    resolution : tuple of int
+        The imaging resolution of the images (e.g., in microns, nanometers).
+    chunk_size : tuple of int
+        The size of each block file.
+    z_step : int, optional
+        The step between entries along the z-axis.
+    factor : tuple of int
+        Scale factor for MIP levels.
+    flip_xy : bool
+        If True, reorder axes to be (Y, X, Z) instead of (X, Y, Z).
+    memory_limit : int
+        Max amount of memory allowed to be used by CloudVolume.
+    offset : tuple of int
+        Offset of this volume from the origin if handling a subvolume.
+    quiet : bool
+        If True, suppress informational logs.
+    """
     if quiet:
         LOGGER.logger.removeHandler(syslog)
         noop = logging.NullHandler()
@@ -270,8 +300,12 @@ def img2cv(input, output, mode='image', ext='.tif', resolution=(10, 10, 10),
     # On rank 0, initialize the CloudVolume info file, and load in the list of
     # images to insert into the archive.
     if RANK == 0:
-        imagelist = sorted(glob.glob(os.path.join(input, '*' + ext)))
-        img = io.imread(imagelist[0])
+        if isinstance(input, str):
+            imagelist = sorted(glob.glob(os.path.join(input, '*' + ext)))
+        elif isinstance(input, list):
+            imagelist = input
+        img = io.imread(imagelist[0],
+            plugin='tifffile' if '.tif' in os.path.splitext(imagelist[0])[1] else None)
         dtype = img.dtype
         volume_shape = (len(imagelist),) + img.shape[:2]
         del img
